@@ -34,17 +34,21 @@ uint pwm_init_gpio(uint gpio, uint wrap) {
     return slice_num;
 }
 
-void led_set_intensity (uint8_t jsGPIO, uint ledGPIO, uint8_t DEADZONE) {
-    // Controle de intensidade do led vermelho
-    adc_select_input(jsGPIO - 26);
-    uint16_t vr_value = adc_read();
-    int16_t diff = vr_value - CENTER_JS;
+
+void led_set_intensity (uint8_t ledGPIO, uint16_t axis, uint8_t DEADZONE) {
+    int16_t diff = axis - CENTER_JS;
     diff = abs(diff);
     // Verifica se o joystick está no centro
-    diff < DEADZONE    ? pwm_set_gpio_level(ledGPIO, 0)
+    diff < DEADZONE     ? pwm_set_gpio_level(ledGPIO, 0)
                         : pwm_set_gpio_level(ledGPIO, diff * 2);
 }
 
+
+uint16_t joystick_read_value(uint8_t jsGPIO) {
+    adc_select_input(jsGPIO - 26);
+    uint16_t axis_value = adc_read();
+    return axis_value;
+}
 
 int main() {
     stdio_init_all();
@@ -80,12 +84,16 @@ int main() {
     pwm_set_enabled(blue_slice, true); // Ativa o PWM
 
     while (true) {
+        uint16_t vrx_value = joystick_read_value(VRX_PIN);
+        uint16_t vry_value = joystick_read_value(VRY_PIN);
+        // se o pwm estiver ativo
+        if(PWM) {
+            // Controle de intensidade do led vermelho]
+            led_set_intensity(LED_RED, vrx_value, DEAD_ZONE_RED);
+            // Controle de intensidade do led azul
+            led_set_intensity(LED_BLUE, vry_value, DEAD_ZONE_BLUE);
+        }
 
-        // Controle de intensidade do led vermelho
-        led_set_intensity(VRX_PIN, LED_RED, DEAD_ZONE_RED);
-        
-        // Controle de intensidade do led azul
-        led_set_intensity(VRY_PIN, LED_BLUE, DEAD_ZONE_BLUE);
 
 
         sleep_ms(10);

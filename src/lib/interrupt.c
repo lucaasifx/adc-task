@@ -7,8 +7,8 @@
 #include "hardware/pwm.h"
 #include <stdio.h>
 
-
-bool PWM = true;
+// inicia ativado
+volatile bool PWM = true;
 
 // Função que lida com eventos de interrupção
 void gpio_irq_handler(uint gpio, uint32_t events) {
@@ -21,15 +21,9 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         }
 
         if(gpio == BUTTON_A) {
-            uint red_slice = pwm_gpio_to_slice_num(LED_RED);
-            uint blue_slice = pwm_gpio_to_slice_num(LED_BLUE);
             if(PWM) {
-                pwm_set_enabled(red_slice, false);
-                pwm_set_enabled(blue_slice, false);
-            }
-            else {
-                pwm_set_enabled(red_slice, true);
-                pwm_set_enabled(blue_slice, true);
+                pwm_set_gpio_level(LED_RED, 0);
+                pwm_set_gpio_level(LED_BLUE, 0);
             }
             PWM = !PWM;
         }

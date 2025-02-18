@@ -13,14 +13,20 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         // tratamento de debouncing dos botões
         if(!debouncing(300))
             return;
-        sleep_ms(5000);
-        // Habilita a entrada do modo BOOTSELL ao pressionar JOYSTICK_BUTTON
         if(gpio == JOYSTICK_BUTTON) {
-
         }
 
         if(gpio == BUTTON_A) {
             
+        }
+
+        if(gpio == BUTTON_B) {
+            //limpa o display
+            ssd1306_fill(&ssd, false);
+            ssd1306_send_data(&ssd);
+            // Entra no modo BOOTSELL e encerra o programa
+            printf("\nFinalizando o programa...\n");
+            reset_usb_boot(0,0);
         }
 
     }

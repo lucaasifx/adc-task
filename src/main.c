@@ -13,8 +13,10 @@
 // ************************************* MACROS ******************************************
 
 #define VRX_PIN 27
+#define VRY_PIN 26
 #define WRAP 4095
-#define DEAD_ZONE 140  // Define uma faixa de tolerância
+#define DEAD_ZONE_RED 150 // Define uma faixa de tolerância
+#define DEAD_ZONE_BLUE 200
 #define CENTER_JS 2048
 
 // Configurações da I2C
@@ -32,12 +34,26 @@ uint pwm_init_gpio(uint gpio, uint wrap) {
     return slice_num;
 }
 
+void led_set_intensity (uint8_t jsGPIO, uint ledGPIO, uint8_t DEADZONE) {
+    // Controle de intensidade do led vermelho
+    adc_select_input(jsGPIO - 26);
+    uint16_t vr_value = adc_read();
+    int16_t diff = vr_value - CENTER_JS;
+    diff = abs(diff);
+    // Verifica se o joystick está no centro
+    diff < DEADZONE    ? pwm_set_gpio_level(ledGPIO, 0)
+                        : pwm_set_gpio_level(ledGPIO, diff * 2);
+}
+
+
 int main() {
     stdio_init_all();
 
     // Inicializa o módulo ADC do Raspberry Pi Pico
     adc_init();
     adc_gpio_init(VRX_PIN); // Configura GP27 (ADC0) para o eixo X do joystick
+    adc_gpio_init(VRY_PIN);
+
     // Inicializa I2C
     i2c_init(I2C_PORT, 400 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
@@ -60,20 +76,17 @@ int main() {
     uint red_slice = pwm_init_gpio(LED_RED, WRAP);
     pwm_set_enabled(red_slice, true); // Ativa o PWM
 
+    uint blue_slice = pwm_init_gpio(LED_BLUE, WRAP);
+    pwm_set_enabled(blue_slice, true); // Ativa o PWM
+
     while (true) {
+
         // Controle de intensidade do led vermelho
-        adc_select_input(1);
-        uint16_t vrx_value = adc_read();
-        int16_t diff_x = vrx_value - CENTER_JS;
-        diff_x = abs(diff_x);
-        printf("diff: %d\n", diff_x);
-        // Verifica
-        diff_x < DEAD_ZONE  ? pwm_set_gpio_level(LED_RED, 0) 
-                            : pwm_set_gpio_level(LED_RED, diff_x * 2);
+        led_set_intensity(VRX_PIN, LED_RED, DEAD_ZONE_RED);
+        
+        // Controle de intensidade do led azul
+        led_set_intensity(VRY_PIN, LED_BLUE, DEAD_ZONE_BLUE);
 
-
-
-        printf("VRX: %d\n", vrx_value);
 
         sleep_ms(10);
     }

@@ -17,8 +17,9 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         // tratamento de debouncing dos botões
         if(!debouncing(300))
             return;
-        if(gpio == JOYSTICK_BUTTON) {
-        }
+        // alterna o estado do led verde
+        if(gpio == JOYSTICK_BUTTON)
+            gpio_put(LED_GREEN, !gpio_get(LED_GREEN));
 
         if(gpio == BUTTON_A) {
             if(PWM) {

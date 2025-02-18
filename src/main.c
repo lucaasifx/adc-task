@@ -75,7 +75,8 @@ int main() {
     init_button_with_interrupt(BUTTON_A, GPIO_IRQ_EDGE_FALL, true);
     init_button_with_interrupt(BUTTON_B, GPIO_IRQ_EDGE_FALL, true);
 
-
+    // Inicia o LED verde
+    init_led(LED_GREEN);
 
     uint red_slice = pwm_init_gpio(LED_RED, WRAP);
     pwm_set_enabled(red_slice, true); // Ativa o PWM

@@ -29,6 +29,7 @@
 int pos_x = 60;
 int pos_y = 28;
 
+
 // Função para inicializar o PWM
 uint pwm_init_gpio(uint gpio, uint wrap) {
     gpio_set_function(gpio, GPIO_FUNC_PWM);
@@ -54,36 +55,8 @@ uint16_t joystick_read_value(uint8_t jsGPIO) {
     return axis_value;
 }
 
-
-
-void update_position() {
-    // Ler valores do ADC
-    adc_select_input(0);
-    int vrx = adc_read(); // Eixo X
-
-    adc_select_input(1);
-    int vry = adc_read(); // Eixo Y
-
-    // Calcular deslocamento relativo ao centro do joystick (2048)
-    int dx = (vrx - 2048) * -1;
-    int dy = (vry - 2048) * -1;
-    // Aplica deadzone
-    if (abs(dx) < DEAD_ZONE) dx = 0;
-    if (abs(dy) < DEAD_ZONE) dy = 0;
-
-    // Normaliza deslocamento (reduzir a velocidade)
-    dx /= SPEED_SCALE;
-    dy /= SPEED_SCALE;
-
-    // Atualizar posição do quadrado
-    pos_x += dx;
-    pos_y += dy;
-
-    // Limitar dentro da tela
-    if (pos_x < 0) pos_x = 0;
-    if (pos_x > 120) pos_x = 120;
-    if (pos_y < 0) pos_y = 0;
-    if (pos_y > 56) pos_y = 56;
+int map_value(int value, int from_low, int from_high, int to_low, int to_high) {
+    return (value - from_low) * (to_high - to_low) / (from_high - from_low) + to_low;
 }
 
 
@@ -139,9 +112,24 @@ int main() {
         int pos_x = map_value(vrx_value, 0, 4095, 0, 120); // X varia de 0 a 120 pixels
         int pos_y = map_value(vry_value, 4095, 0, 0, 56);  // Y varia de 0 a 56 pixels
         
-        update_position();
         ssd1306_fill(&ssd, false); // Limpa a tela
-        ssd1306_rect(&ssd, pos_y, pos_x, 8, 8, true, true); // Desenha o quadrado
+        draw_border(&ssd, border_len); // Desenha a borda se necessário
+        if(!border_len)
+            ssd1306_rect(&ssd, pos_y, pos_x, 8, 8, true, true);
+        else {
+            // Definir limites considerando a borda
+            int min_x = border_len;
+            int max_x = 120 - border_len;
+            int min_y = border_len;
+            int max_y = 56 - border_len;
+
+            // Aplicar limites à posição do quadrado
+            if (pos_x < min_x) pos_x = min_x;
+            if (pos_x > max_x) pos_x = max_x;
+            if (pos_y < min_y) pos_y = min_y;
+            if (pos_y > max_y) pos_y = max_y;
+            ssd1306_rect(&ssd, pos_y, pos_x, 8, 8, true, true);
+        }
         ssd1306_send_data(&ssd);
 
 

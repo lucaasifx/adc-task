@@ -2,6 +2,7 @@
 #include "font.h"
 
 ssd1306_t ssd;
+volatile uint8_t border_len = 0;
 
 void ssd1306_init(ssd1306_t *ssd, uint8_t width, uint8_t height, bool external_vcc, uint8_t address, i2c_inst_t *i2c) {
   ssd->width = width;
@@ -198,5 +199,25 @@ void ssd1306_draw_string(ssd1306_t *ssd, const char *str, uint8_t x, uint8_t y)
     {
       break;
     }
+  }
+}
+
+void draw_border(ssd1306_t *ssd, uint8_t border_thickness) {
+  // nao desenha nada
+  if(!border_len)
+    return;
+  // Desenha a borda superior e inferior
+  for (uint8_t i = 0; i < border_thickness; i++) {
+      for (uint8_t x = 0; x < WIDTH; x++) {
+          ssd1306_pixel(ssd, x, i, true); // Linha superior
+          ssd1306_pixel(ssd, x, HEIGHT - 1 - i, true); // Linha inferior
+      }
+  }
+  // Desenha a borda esquerda e direita
+  for (uint8_t i = 0; i < border_thickness; i++) {
+      for (uint8_t y = 0; y < HEIGHT; y++) {
+          ssd1306_pixel(ssd, i, y, true); // Coluna esquerda
+          ssd1306_pixel(ssd, WIDTH - 1 - i, y, true); // Coluna direita
+      }
   }
 }
